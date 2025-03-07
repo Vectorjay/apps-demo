@@ -1,8 +1,8 @@
 replicaCount: 2
 image:
-  repository: your-docker-registry/demo-app
+  repository: vectorzy/demo-app
   tag: latest
 service:
-  type: LoadBalancer
+  type: NodePort
   port: 80
 
