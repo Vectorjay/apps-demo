@@ -1,3 +1,8 @@
+image: docker:24.0.5  # Use a Docker image with preinstalled Docker
+
+options:
+  docker: true  # Enable Docker-in-Docker
+
 image: maven:3.8.5-openjdk-17
 
 pipelines:
