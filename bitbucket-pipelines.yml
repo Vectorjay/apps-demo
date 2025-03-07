@@ -17,7 +17,7 @@ pipelines:
         name: Build and Push Docker Image
         script:
           - docker build -t vectorzy/demo-app:latest .
-          - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin vectorzy
+          - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
           - docker push vectorzy/demo-app:latest
     # - step:
     #     name: Deploy to Kubernetes via ArgoCD
