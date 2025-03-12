@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: vectorzy/todo-app  # Your Docker image repository
+  repository: vectorzy/demo-app  # Your Docker image repository
   tag: latest
   pullPolicy: IfNotPresent
 
