@@ -1,8 +1,19 @@
 replicaCount: 2
+
 image:
-  repository: vectorzy/demo-app
+  repository: vectorzy/demo-app  # Your Docker image repository
   tag: latest
+  pullPolicy: IfNotPresent
+
 service:
-  type: NodePort
-  port: 80
+  type: ClusterIP
+  port: 8080  # Port your app listens on
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "512Mi"
+  limits:
+    cpu: "500m"
+    memory: "1Gi"
 

@@ -1,4 +1,6 @@
 apiVersion: v2
 name: demo-app
-version: 0.1.0
-description: A Helm chart for deploying the Java application
+description: A Helm chart for deploying the Java demo app
+version: 1.0.0
+appVersion: "1.0"
+
