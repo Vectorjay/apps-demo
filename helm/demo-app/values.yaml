@@ -1,8 +1,8 @@
 replicaCount: 1
 
 image:
-  repository: vectorzy/demo-app  # Your Docker image repository
-  tag: v3
+  repository: vectorzy/todo-app # Your Docker image repository
+  tag: tagname
   pullPolicy: IfNotPresent
 
 service:
