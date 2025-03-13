@@ -44,12 +44,12 @@
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring-boot.version}</version>
+                <version>2.7.10</version>
             </plugin>
         </plugins>
     </build>
 </project>
+
