@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: vectorzy/demo-app  # Your Docker image repository
-  tag: v3
+  tag: v4
   pullPolicy: IfNotPresent
 
 service:
