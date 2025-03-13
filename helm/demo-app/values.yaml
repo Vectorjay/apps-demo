@@ -6,7 +6,7 @@ image:
   pullPolicy: IfNotPresent
 
 service:
-  type: NodePort
+  type: NodePort # Switch between clusterIp NodePort & LoadBalancer
   port: 8080  # Port your app listens on
 
 resources:
