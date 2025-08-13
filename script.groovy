@@ -6,9 +6,9 @@ def buildJar(){
 def buildImage(){
     echo "building the docker image..."
     withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]){
-        sh 'docker build -t vectorzy/demo-app:jma-3.0 .'
-        sh "echo $PASS | docker login -u $USER --password-stdin"
-        sh 'docker push vectorzy/demo-app:jma-3.0'
+        sh 'docker build -t vectorzy/demo-app:jma-2.0 .'
+        sh "docker login -u \$USER -p \$PASS"
+        sh 'docker push vectorzy/demo-app:jma-2.0'
     }
 }
 
