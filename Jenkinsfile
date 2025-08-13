@@ -4,22 +4,11 @@ pipeline {
     stages {
         stage('BUild app') {
             steps {
+                script{
+                    sh 'mvn package'
+                }
                 echo 'Building app'
             }
         }
-    }
-   stages {
-        stage('Build image') {
-            steps {
-                echo 'Building image'
-            }
-        }
-    }
-   stages {
-        stage('Push image') {
-            steps {
-                echo 'Pushing image'
-            }
-        }
-    }
+    }   
 }
