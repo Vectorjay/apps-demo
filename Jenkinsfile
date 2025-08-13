@@ -1,14 +1,16 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven 3.9.11'  // Replace with the name you've configured in Jenkins -> Global Tool Configuration
+    }
+
     stages {
-        stage('BUild app') {
+        stage('Build app') {
             steps {
-                script{
-                    sh 'mvn package'
-                }
                 echo 'Building app'
+                sh 'mvn package'
             }
         }
-    }   
+    }
 }
