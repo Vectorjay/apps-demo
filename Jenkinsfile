@@ -34,9 +34,9 @@ pipeline {
                 script{
                     echo "building the docker image..."
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]){
-                        sh "docker build -t vectorzy/demo-app:jm.00 ."
+                        sh "docker build -t vectorzy/demo-app:jm-2.0 ."
                         sh "echo \$PASS | docker login -u \$USER --password-stdin"
-                        sh "docker push vectorzy/demo-app:jm.00"
+                        sh "docker push vectorzy/demo-app:jm-2.0"
                     }
                 }
             }
