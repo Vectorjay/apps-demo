@@ -1,6 +1,10 @@
 pipeline {
     agent any
     
+    tools{
+        maven 'maven'  // Replace with the name you've configured in Jenkins -> Global Tool Configuration
+    }
+    
     environment {
         // Snyk configuration
         SNYK_SEVERITY_THRESHOLD = 'high'
