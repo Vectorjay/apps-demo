@@ -78,7 +78,7 @@ pipeline {
                                 --json-file-output=/app/snyk-results.json
                         """
                         
-                        # Generate HTML report
+                        //Generate HTML report
                         sh """
                             docker run --rm \\
                                 -v \$(pwd):/app \\
