@@ -69,10 +69,10 @@ pipeline {
                                 snyk container test ${FULL_IMAGE_NAME} \\
                                 --file=Dockerfile \\
                                 --severity-threshold=${SNYK_SEVERITY_THRESHOLD} \\
-                                --org=your-org-name \\
+                                --org=vectorjay \\
                                 --json-file-output=/workdir/snyk-results.json
                         """
-                        
+                    
                         // Generate HTML report
                         sh """
                             docker run --rm \\
