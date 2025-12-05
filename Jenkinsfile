@@ -1,14 +1,9 @@
 pipeline {
     agent any
-
-    tools {
-        maven 'maven'  // Replace with the name you've configured in Jenkins -> Global Tool Configuration
-    }
     
     environment {
         // Snyk configuration
-        SNYK_SEVERITY_THRESHOLD = 'critical'  // Options: low, medium, high, critical
-        PATH = "/usr/share/maven/bin:${env.PATH}"
+        SNYK_SEVERITY_THRESHOLD = 'high'
     }
     
     stages {
@@ -19,9 +14,9 @@ pipeline {
                     echo 'incrementing app version...'
                     sh '''
                         mvn build-helper:parse-version versions:set \
-                          -DnewVersion='${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextIncrementalVersion}' \
+                          -DnewVersion=\\\${parsedVersion.majorVersion}.\\\${parsedVersion.minorVersion}.\\\${parsedVersion.nextIncrementalVersion} \
                           versions:commit
-                        '''
+                    '''
                     def matcher = readFile('pom.xml') =~ '<version>(.+)</version>'
                     def version = matcher[0][1]
                     env.IMAGE_NAME = "$version-$BUILD_NUMBER"
@@ -131,41 +126,31 @@ pipeline {
         success {
             echo "Pipeline completed successfully!"
             
-            // Clean up local docker images
-            sh """
-                docker rmi ${FULL_IMAGE_NAME} || true
-                echo "Cleaned up Docker images"
-            """
+            script {
+                // Clean up local docker images if we're still in agent context
+                sh """
+                    docker rmi ${env.FULL_IMAGE_NAME} || true
+                    echo "Cleaned up Docker images"
+                """
+            }
         }
         failure {
             echo "Pipeline failed!"
+            
+            // Optional: Add notification here
+            script {
+                // You can add Slack/email notifications here
+                echo "Build failed with status: ${currentBuild.result}"
+            }
         }
         always {
-            echo "Pipeline finished - cleaning up workspace..."
+            echo "Pipeline finished!"
             
-            // Optional: Send notification with scan results
+            // Remove the problematic fileExists check or wrap it in script block
             script {
-                if (fileExists('snyk-results.json')) {
-                    try {
-                        def scanResults = readJSON file: 'snyk-results.json'
-                        def vulnCount = scanResults.vulnerabilities?.size() ?: 0
-                        def uniqueIssueCount = scanResults.uniqueCount ?: 0
-                        
-                        echo "========================================"
-                        echo "Snyk Scan Summary:"
-                        echo "Total vulnerabilities found: ${vulnCount}"
-                        echo "Unique issues: ${uniqueIssueCount}"
-                        echo "Scan results saved to: snyk-results.json"
-                        echo "HTML report: snyk-report.html"
-                        echo "========================================"
-                        
-                        if (vulnCount > 0) {
-                            currentBuild.description = "Found ${vulnCount} vulnerabilities"
-                        }
-                    } catch (Exception e) {
-                        echo "Could not parse Snyk results: ${e.message}"
-                    }
-                }
+                // Simple cleanup or summary
+                echo "Cleaning up workspace..."
+                // You can add cleanup commands here if needed
             }
         }
     }
