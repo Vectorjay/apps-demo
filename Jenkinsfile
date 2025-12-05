@@ -58,34 +58,53 @@ pipeline {
                     withCredentials([
                         string(credentialsId: 'snyk-auth-token', variable: 'SNYK_TOKEN')
                     ]) {
-                        sh """
-                            echo "Running Snyk scan on: ${FULL_IMAGE_NAME}"
-                            echo "Current directory contents:"
-                            ls -la
-                            echo "Dockerfile exists: \$(test -f Dockerfile && echo 'Yes' || echo 'No')"
+                        sh '''
+                            #!/bin/bash
+                            set -e
                             
-                            # Run Snyk scan - mount current directory to access Dockerfile
-                            docker run --rm \\
-                                -e SNYK_TOKEN=\${SNYK_TOKEN} \\
-                                -v /var/run/docker.sock:/var/run/docker.sock \\
-                                -v \$(pwd):/app:ro \\
-                                -w /app \\
-                                snyk/snyk:docker \\
-                                snyk container test ${FULL_IMAGE_NAME} \\
-                                --file=/app/Dockerfile \\
-                                --severity-threshold=${SNYK_SEVERITY_THRESHOLD} \\
-                                --org=vectorjay \\
-                                --json-file-output=/app/snyk-results.json
-                        """
+                            # Get workspace path
+                            WORKSPACE=$(pwd)
+                            echo "Workspace: $WORKSPACE"
+                            
+                            # Check Dockerfile exists
+                            if [ ! -f "Dockerfile" ]; then
+                                echo "ERROR: Dockerfile not found in $WORKSPACE"
+                                echo "Looking for Dockerfile..."
+                                find . -name "Dockerfile" | head -5
+                                exit 1
+                            fi
+                            
+                            echo "Dockerfile found at: $WORKSPACE/Dockerfile"
+                            
+                            # Run Snyk scan
+                            docker run --rm \
+                                -e SNYK_TOKEN=''' + env.SNYK_TOKEN + ''' \
+                                -v /var/run/docker.sock:/var/run/docker.sock \
+                                -v "$WORKSPACE":/workspace \
+                                -w /workspace \
+                                snyk/snyk:docker \
+                                snyk container test ''' + env.FULL_IMAGE_NAME + ''' \
+                                --file=./Dockerfile \
+                                --severity-threshold=''' + env.SNYK_SEVERITY_THRESHOLD + ''' \
+                                --org=vectorjay \
+                                --json-file-output=./snyk-results.json
+                            
+                            echo "Snyk scan completed"
+                        '''
                         
                         //Generate HTML report
-                        sh """
-                            docker run --rm \\
-                                -v \$(pwd):/app \\
-                                -e SNYK_TOKEN=\${SNYK_TOKEN} \\
-                                snyk/snyk:docker \\
-                                snyk-to-html -i /app/snyk-results.json -o /app/snyk-report.html
-                        """
+                        sh '''
+                            if [ -f "snyk-results.json" ]; then
+                                docker run --rm \
+                                    -v $(pwd):/workspace \
+                                    -w /workspace \
+                                    snyk/snyk:docker \
+                                    snyk-to-html -i snyk-results.json -o snyk-report.html
+                                echo "HTML report generated"
+                            else
+                                echo "Warning: snyk-results.json not found"
+                            fi
+                        '''
                     }
                     
                     // Archive and publish results
