@@ -46,10 +46,10 @@ pipeline {
             }
         }
 
-        stage("deploy") {
+        stage("scan") {
             steps{
                 script{
-                    echo "deploying the application"
+                    echo "Scanning image....."
                 }
             }
         }
