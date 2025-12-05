@@ -1,12 +1,11 @@
 pipeline {
     agent any
-    
+
     tools{
-        maven 'maven'  // Replace with the name you've configured in Jenkins -> Global Tool Configuration
+        maven 'maven'
     }
     
     environment {
-        // Snyk configuration
         SNYK_SEVERITY_THRESHOLD = 'high'
     }
     
@@ -57,41 +56,40 @@ pipeline {
                     echo "Scanning image with Snyk..."
                     
                     withCredentials([
-                        usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER'),
                         string(credentialsId: 'snyk-auth-token', variable: 'SNYK_TOKEN')
                     ]) {
                         sh """
-                            # Run Snyk scan using Docker
+                            echo "Running Snyk scan on: ${FULL_IMAGE_NAME}"
+                            echo "Current directory contents:"
+                            ls -la
+                            echo "Dockerfile exists: \$(test -f Dockerfile && echo 'Yes' || echo 'No')"
+                            
+                            # Run Snyk scan - mount current directory to access Dockerfile
                             docker run --rm \\
                                 -e SNYK_TOKEN=\${SNYK_TOKEN} \\
                                 -v /var/run/docker.sock:/var/run/docker.sock \\
+                                -v \$(pwd):/app:ro \\
+                                -w /app \\
                                 snyk/snyk:docker \\
                                 snyk container test ${FULL_IMAGE_NAME} \\
-                                --file=Dockerfile \\
+                                --file=/app/Dockerfile \\
                                 --severity-threshold=${SNYK_SEVERITY_THRESHOLD} \\
                                 --org=vectorjay \\
-                                --json-file-output=/workdir/snyk-results.json
+                                --json-file-output=/app/snyk-results.json
                         """
-                    
-                        // Generate HTML report
+                        
+                        # Generate HTML report
                         sh """
                             docker run --rm \\
-                                -v \$(pwd):/workdir \\
-                                -v /var/run/docker.sock:/var/run/docker.sock \\
+                                -v \$(pwd):/app \\
                                 -e SNYK_TOKEN=\${SNYK_TOKEN} \\
                                 snyk/snyk:docker \\
-                                sh -c 'snyk-to-html -i /workdir/snyk-results.json -o /workdir/snyk-report.html'
+                                snyk-to-html -i /app/snyk-results.json -o /app/snyk-report.html
                         """
                     }
-                }
-            }
-            
-            post {
-                always {
-                    // Archive scan results
-                    archiveArtifacts artifacts: 'snyk-results.json, snyk-report.html', allowEmptyArchive: true
                     
-                    // Publish HTML report
+                    // Archive and publish results
+                    archiveArtifacts artifacts: 'snyk-results.json, snyk-report.html', allowEmptyArchive: true
                     publishHTML([
                         allowMissing: true,
                         alwaysLinkToLastBuild: true,
@@ -104,17 +102,20 @@ pipeline {
             }
         }
 
-        stage("commit version update") {
+        stage("Cleanup and Commit") {
             steps {
                 script {
+                    echo "Cleaning up and committing changes..."
+                    
+                    // Clean up Docker image
+                    sh "docker rmi ${FULL_IMAGE_NAME} || true"
+                    
+                    // Commit version update
                     withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                        sh 'git config --global user.email "jenkins@example.com"'
-                        sh 'git config --global user.name "jenkins"'
-
-                        sh 'git status'
-                        sh 'git branch'
-                        sh 'git config --list'
-
+                        sh '''
+                            git config --global user.email "jenkins@example.com"
+                            git config --global user.name "jenkins"
+                        '''
                         sh "git remote set-url origin https://${USER}:${PASS}@github.com/Vectorjay/apps-demo.git"
                         sh 'git add .'
                         sh 'git commit -m "ci: version bump"'
@@ -124,38 +125,5 @@ pipeline {
             }
         }
 
-    }
-    
-    post {
-        success {
-            echo "Pipeline completed successfully!"
-            
-            script {
-                // Clean up local docker images if we're still in agent context
-                sh """
-                    docker rmi ${env.FULL_IMAGE_NAME} || true
-                    echo "Cleaned up Docker images"
-                """
-            }
-        }
-        failure {
-            echo "Pipeline failed!"
-            
-            // Optional: Add notification here
-            script {
-                // You can add Slack/email notifications here
-                echo "Build failed with status: ${currentBuild.result}"
-            }
-        }
-        always {
-            echo "Pipeline finished!"
-            
-            // Remove the problematic fileExists check or wrap it in script block
-            script {
-                // Simple cleanup or summary
-                echo "Cleaning up workspace..."
-                // You can add cleanup commands here if needed
-            }
-        }
     }
 }
