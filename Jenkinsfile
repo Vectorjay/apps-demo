@@ -8,6 +8,7 @@ pipeline {
     environment {
         // Snyk configuration
         SNYK_SEVERITY_THRESHOLD = 'critical'  // Options: low, medium, high, critical
+        PATH = "/usr/share/maven/bin:${env.PATH}"
     }
     
     stages {
