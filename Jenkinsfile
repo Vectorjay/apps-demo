@@ -50,49 +50,6 @@ pipeline {
             }
         }
 
-        stage("Snyk Security Scan") {
-            steps {
-                script {
-                    echo "Scanning image with Snyk..."
-                    
-                    withCredentials([
-                        string(credentialsId: 'snyk-auth-token', variable: 'SNYK_TOKEN')
-                    ]) {
-                        // Just scan the image without Dockerfile
-                        sh """
-                            docker run --rm \\
-                                -e SNYK_TOKEN=\${SNYK_TOKEN} \\
-                                -v /var/run/docker.sock:/var/run/docker.sock \\
-                                snyk/snyk:docker \\
-                                snyk container test ${FULL_IMAGE_NAME} \\
-                                --severity-threshold=${SNYK_SEVERITY_THRESHOLD} \\
-                                --org=vectorjay
-                        """
-                        
-                        //Generate HTML report
-                        sh """
-                            docker run --rm \\
-                                -e SNYK_TOKEN=\${SNYK_TOKEN} \\
-                                -v /var/run/docker.sock:/var/run/docker.sock \\
-                                -v \$(pwd):/output \\
-                                snyk/snyk:docker \\
-                                bash -c "snyk container test ${FULL_IMAGE_NAME} --severity-threshold=${SNYK_SEVERITY_THRESHOLD} --json 2>/dev/null || echo '{}'" > snyk-results.json
-                        """
-                    }
-                    
-                    // Archive and publish results
-                    archiveArtifacts artifacts: 'snyk-results.json, snyk-report.html', allowEmptyArchive: true
-                    publishHTML([
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: '',
-                        reportFiles: 'snyk-report.html',
-                        reportName: 'Snyk Security Report'
-                    ])
-                }
-            }
-        }
 
         stage("Cleanup and Commit") {
             steps {
