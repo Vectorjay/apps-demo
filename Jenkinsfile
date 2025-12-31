@@ -5,10 +5,6 @@ pipeline {
         maven 'maven'
     }
     
-    environment {
-        SNYK_SEVERITY_THRESHOLD = 'high'
-    }
-    
     stages {
 
         stage("increment version") {
